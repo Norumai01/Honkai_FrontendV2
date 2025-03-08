@@ -14,7 +14,7 @@ export default function Login(): React.ReactElement {
   })
 
   const navigate: NavigateFunction = useNavigate();
-  const { login, userRole, user, token } = useAuth()
+  const { login } = useAuth()
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target
@@ -28,17 +28,7 @@ export default function Login(): React.ReactElement {
     try {
       await login(formData.userInput, formData.password)
 
-      // Remove all console.log() of userRole user and token later.
-      if (userRole === "ADMIN") {
-        console.log(userRole)
-      }
-      if (userRole === "USER") {
-        console.log(userRole)
-      }
-
-      console.log(user)
-      console.log(token)
-      // navigate("/")
+      navigate("/")
     }
     catch (error) {
       console.error("Login failed", error)
