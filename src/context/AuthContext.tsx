@@ -4,7 +4,7 @@ import axios from 'axios'
 
 interface AuthContextTypes extends AuthState {
   login: (userInput: string, password: string) => Promise<void>
-  logout: () => Promise<void>
+  logout: () => void
 }
 
 const AuthContext = createContext<AuthContextTypes | undefined>(undefined)
@@ -20,7 +20,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const [userRole, setUserRole] = useState<Role | null>(() => {
     const savedRole = localStorage.getItem("userRole")
-    return savedRole ? JSON.parse(savedRole) : null
+    return savedRole ? savedRole as Role : null
   })
 
   const [token, setToken] = useState<string | null>(() => {
@@ -46,11 +46,55 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (userInput: string, password: string): Promise<void> => {
     try {
-      
+      const response = await axios.post<{ token: string; user: User }>(
+        "http://localhost:8080/auth/login",
+        {
+          userInput,
+          password,
+        }
+      )
+
+      if (response.status === 200) {
+        const { user, token } = response.data
+        if (token && user) {
+          setUser(user)
+          setToken(token)
+          setUserRole(user.role)
+        }
+        else {
+          throw new Error("Login Failed: Invalid credentials")
+        }
+      }
+      else {
+        throw new Error("Login Failed.")
+      }
     }
     catch (error) {
-
+      console.error("Login failed", error)
+      throw error
     }
   }
+
+  const logout = (): void => {
+    localStorage.removeItem("user")
+    localStorage.removeItem("userRole")
+    localStorage.removeItem("token")
+
+    delete axios.defaults.headers.common['Authorization']
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, userRole, token, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  )
+}
+
+export const useAuth = (): AuthContextTypes => {
+  const context = useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error("useAuth must be used within AuthProvider")
+  }
+  return context
 }
 
