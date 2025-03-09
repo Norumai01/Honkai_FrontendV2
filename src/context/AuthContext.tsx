@@ -1,6 +1,7 @@
 import React, {createContext, ReactNode, useContext, useEffect, useState } from 'react'
 import { Role, User, AuthState } from "./types.ts";
 import axios from 'axios'
+import { API_URL } from "../services/api.ts";
 
 interface AuthContextTypes extends AuthState {
   login: (userInput: string, password: string) => Promise<void>
@@ -47,7 +48,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (userInput: string, password: string): Promise<void> => {
     try {
       const response = await axios.post<{ token: string; user: User }>(
-        "http://localhost:8080/auth/login",
+        `${API_URL}/auth/login`,
         {
           userInput,
           password,
