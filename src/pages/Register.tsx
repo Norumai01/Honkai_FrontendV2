@@ -76,7 +76,7 @@ export default function Register(): React.ReactElement {
             Create an Account
           </label>
           {error !== null && (
-            <p className="text-red-400 text-sm font-semibold mb-10">
+            <p className="text-red-400 text-sm text-center font-semibold mb-10">
               {error}
             </p>
           )}
