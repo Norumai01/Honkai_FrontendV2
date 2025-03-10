@@ -58,7 +58,7 @@ export default function Register(): React.ReactElement {
     formDataObj.append("password", formData.password)
 
     axios
-      .post(`${API_URL}/auth/createUser`, formDataObj)
+      .post(`${API_URL}/auth/register`, formDataObj)
       .then(() => {
         navigate("/login");
       })
@@ -94,7 +94,7 @@ export default function Register(): React.ReactElement {
             name="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="Username"
+            placeholder="Email"
             required
             className="block w-full bg-white text-black placeholder-gray-300 text-base"
           />
