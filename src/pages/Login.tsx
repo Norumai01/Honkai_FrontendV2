@@ -14,6 +14,7 @@ export default function Login(): React.ReactElement {
   })
 
   const navigate: NavigateFunction = useNavigate();
+  const [error, setError] = useState<string | null>(null);
   const { login } = useAuth()
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
@@ -26,6 +27,16 @@ export default function Login(): React.ReactElement {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     try {
+      if (formData.userInput === "" || formData.userInput === null) {
+        setError("Username or Email is required");
+        return;
+      }
+
+      if (formData.password === "" || formData.password === null ) {
+        setError("Please enter a valid password");
+        return;
+      }
+
       await login(formData.userInput, formData.password)
 
       navigate("/")
@@ -39,9 +50,14 @@ export default function Login(): React.ReactElement {
     <div className="min-h-screen bg-black flex flex-col items-center justify-center">
       <div className="w-full max-w-md">
         <form className="flex flex-col space-y-6" onSubmit={handleSubmit}>
-          <label className="text-white text-3xl font-bold text-center mb-20">
+          <label className={`text-white text-3xl font-bold text-center ${error ? "mb-10" : "mb-20"}`}>
             Login
           </label>
+          {error !== null && (
+            <p className="text-red-400 text-sm text-center font-semibold mb-10">
+              {error}
+            </p>
+          )}
           <input
             type="text"
             name="userInput"
