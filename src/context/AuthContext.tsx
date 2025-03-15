@@ -1,7 +1,7 @@
 import React, {createContext, ReactNode, useContext, useEffect, useState } from 'react'
 import { Role, User, AuthState } from "./types.ts";
 import axios from 'axios'
-import { API_URL } from "../services/api.ts";
+import {API_URL, getAuthHeader} from "../services/api.ts";
 
 interface AuthContextTypes extends AuthState {
   login: (userInput: string, password: string) => Promise<void>
@@ -76,12 +76,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }
 
-  const logout = (): void => {
-    localStorage.removeItem("user")
-    localStorage.removeItem("userRole")
-    localStorage.removeItem("token")
+  const logout = async (): Promise<void> => {
+    try {
+      const token: string | null = localStorage.getItem("token")
 
-    delete axios.defaults.headers.common['Authorization']
+      if (token) {
+        await axios.post(`${API_URL}/auth/logout`, null, {
+          headers: {
+            ...getAuthHeader(token),
+          }
+        })
+      }
+    }
+    catch (error) {
+      console.error("Logout Failed", error)
+    }
+    finally {
+      localStorage.removeItem("user")
+      localStorage.removeItem("userRole")
+      localStorage.removeItem("token")
+
+      delete axios.defaults.headers.common['Authorization']
+    }
   }
 
   return (
