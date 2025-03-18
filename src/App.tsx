@@ -1,12 +1,24 @@
+import React from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext.tsx";
+import Login from "./pages/Login.tsx";
+import Home from "./pages/Home.tsx";
+import Register from "./pages/Register.tsx";
+
 function App() {
+
   return (
-    <>
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <h1 className="text-3xl font-bold text-blue-400">
-          Hello Tailwind + React + TypeScript!
-        </h1>
+    <AuthProvider>
+      <div>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+          </Routes>
+        </Router>
       </div>
-    </>
+    </AuthProvider>
   )
 }
 
