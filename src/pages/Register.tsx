@@ -1,7 +1,6 @@
 import React, {ChangeEvent, FormEvent, useState} from "react";
 import { NavigateFunction, useNavigate } from "react-router-dom";
-import { API_URL } from "../services/api.ts";
-import axios from "axios";
+import { createAPI } from "../services/api.ts";
 
 interface RegisterProps {
   username: string;
@@ -57,14 +56,14 @@ export default function Register(): React.ReactElement {
     formDataObj.append("email", formData.email)
     formDataObj.append("password", formData.password)
 
-    axios
-      .post(`${API_URL}/auth/register`, formDataObj)
+    createAPI
+      .post(`/auth/register`, formDataObj)
       .then(() => {
         navigate("/login");
       })
       .catch((error: Error) => {
         console.log("Registration failed: ", error);
-        alert("Registeration failed. Please try again later.");
+        alert("Registration failed. Please try again later.");
       })
   }
 

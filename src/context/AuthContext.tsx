@@ -1,7 +1,7 @@
 import React, {createContext, ReactNode, useContext, useEffect, useState } from 'react'
 import { Role, User, AuthState } from "./types.ts";
 import axios from 'axios'
-import {API_URL, getAuthHeader} from "../services/api.ts";
+import { createAPI } from "../services/api.ts";
 
 interface AuthContextTypes extends AuthState {
   login: (userInput: string, password: string) => Promise<void>
@@ -24,69 +24,71 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return savedRole ? savedRole as Role : null
   })
 
+  // Remove
   const [token, setToken] = useState<string | null>(() => {
     return localStorage.getItem("token")
   })
 
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(() => {
+    return localStorage.getItem("user") !== null
+  })
+
   useEffect(() => {
-    if (user && token) {
+    if (user) {
       localStorage.setItem("user", JSON.stringify(user))
       localStorage.setItem("userRole", user.role)
-      localStorage.setItem("token", token)
 
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      axios.defaults.withCredentials = true
     }
     else {
       localStorage.removeItem("user")
       localStorage.removeItem("userRole")
-      localStorage.removeItem("token")
     }
-
-    delete axios.defaults.headers.common['Authorization']
-  }, [user, token])
+  }, [user])
 
   const login = async (userInput: string, password: string): Promise<void> => {
     try {
-      const response = await axios.post<{ token: string; user: User }>(
-        `${API_URL}/auth/login`,
+      const response = await createAPI.post<{ user: User }>(
+        "/auth/login",
         {
           userInput,
           password,
-        }
+        },
       )
 
-      if (response.status === 200) {
-        const { user, token } = response.data
-        if (token && user) {
-          setUser(user)
-          setToken(token)
-          setUserRole(user.role)
-        }
-        else {
-          throw new Error("Login Failed: Invalid credentials")
-        }
+      const { user } = response.data
+
+      if (!user) {
+        throw new Error("Login failed: Missing credentials")
       }
-      else {
-        throw new Error("Login Failed.")
-      }
+
+      setUser(user)
+      setUserRole(user.role)
+      setIsAuthenticated(true)
+
+      axios.defaults.withCredentials = true
     }
     catch (error) {
       console.error("Login failed", error)
+
+      if (axios.isAxiosError(error) && error.response) {
+        switch (error.response.status) {
+          case 401:
+            throw new Error("Unauthorized: Invalid credentials.")
+          case 400:
+            throw new Error("Login failed: Error has occurred.")
+          default:
+            throw new Error(`Login failed: Error code ${error.response.status}`)
+        }
+      }
+
       throw error
     }
   }
 
   const logout = async (): Promise<void> => {
     try {
-      const token: string | null = localStorage.getItem("token")
-
-      if (token) {
-        await axios.post(`${API_URL}/auth/logout`, null, {
-          headers: {
-            ...getAuthHeader(token),
-          }
-        })
-      }
+      await createAPI.post("/auth/logout", null)
     }
     catch (error) {
       console.error("Logout Failed", error)
@@ -94,14 +96,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     finally {
       localStorage.removeItem("user")
       localStorage.removeItem("userRole")
-      localStorage.removeItem("token")
 
-      delete axios.defaults.headers.common['Authorization']
+      setUser(null)
+      setUserRole(null)
+      setIsAuthenticated(false)
     }
   }
 
   return (
-    <AuthContext.Provider value={{ user, userRole, token, login, logout }}>
+    <AuthContext.Provider value={{ user, userRole, isAuthenticated, login, logout }}>
       {children}
     </AuthContext.Provider>
   )
